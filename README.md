@@ -1,11 +1,11 @@
 # Padrões de Projeto em Java: Singleton e Adapter
 
-Este projeto apresenta dois exemplos simples de padrões de projeto em Java:
+Este projeto apresenta dois padrões de projeto em Java:
 
 - Singleton
 - Adapter
 
-O objetivo é mostrar como esses padrões funcionam na prática, usando exemplos fáceis de entender e aplicar.
+O objetivo é mostrar como esses padrões funcionam na prática usando exemplos simples e fáceis de entender.
 
 ---
 
@@ -23,97 +23,87 @@ O objetivo é mostrar como esses padrões funcionam na prática, usando exemplos
 
 O padrão Singleton é usado quando queremos garantir que uma classe tenha apenas **uma única instância** durante toda a execução do programa.
 
-Ou seja, em vez de criar vários objetos com `new`, a própria classe controla sua criação.
+Ou seja, o sistema inteiro usa o mesmo objeto.
 
 ---
 
 ## Exemplo utilizado
 
-Neste projeto, o Singleton foi aplicado em um **Diário de Bordo**.
+Neste projeto, o Singleton foi aplicado em uma **Central de Energia da Nave**.
 
-A ideia é que exista apenas um diário principal para registrar os acontecimentos da nave.
+A ideia é que a nave tenha apenas uma central principal responsável por controlar a energia.
+
+Mesmo que diferentes partes do sistema acessem essa central, todas usam a mesma instância.
 
 ---
 
 ## Classes do Singleton
 
 ```text
-DiarioDeBordo.java
+CentralEnergia.java
 MainSingleton.java
 ```
 
 ---
 
-## Exemplo do código
+## Classe `CentralEnergia.java`
 
 ```java
-public class DiarioDeBordo {
+public enum CentralEnergia {
 
-    private static DiarioDeBordo instancia;
+    INSTANCIA;
 
-    private DiarioDeBordo() {
-        System.out.println("Diário de bordo criado.");
-    }
+    private int energia = 100;
 
-    public static DiarioDeBordo getInstancia() {
-        if (instancia == null) {
-            instancia = new DiarioDeBordo();
+    public void consumirEnergia(String sistema, int quantidade) {
+        energia -= quantidade;
+
+        if (energia < 0) {
+            energia = 0;
         }
 
-        return instancia;
+        System.out.println(sistema + " consumiu " + quantidade + "% de energia.");
     }
 
-    public void registrar(String mensagem) {
-        System.out.println("Registro no diário: " + mensagem);
+    public void recarregarEnergia(int quantidade) {
+        energia += quantidade;
+
+        if (energia > 100) {
+            energia = 100;
+        }
+
+        System.out.println("Energia recarregada em " + quantidade + "%.");
+    }
+
+    public void mostrarEnergia() {
+        System.out.println("Energia atual da nave: " + energia + "%");
     }
 }
 ```
 
 ---
 
-## Como funciona?
-
-O construtor da classe é privado:
-
-```java
-private DiarioDeBordo() {
-}
-```
-
-Isso impede que outras classes criem objetos diretamente usando:
-
-```java
-new DiarioDeBordo();
-```
-
-A única forma de acessar o objeto é pelo método:
-
-```java
-DiarioDeBordo.getInstancia();
-```
-
-Esse método verifica se a instância já existe.
-
-Se não existir, ele cria.  
-Se já existir, ele retorna a mesma instância.
-
----
-
-## Exemplo de uso
+## Classe `MainSingleton.java`
 
 ```java
 public class MainSingleton {
 
     public static void main(String[] args) {
 
-        DiarioDeBordo diario1 = DiarioDeBordo.getInstancia();
-        DiarioDeBordo diario2 = DiarioDeBordo.getInstancia();
+        CentralEnergia central1 = CentralEnergia.INSTANCIA;
+        CentralEnergia central2 = CentralEnergia.INSTANCIA;
 
-        diario1.registrar("A nave iniciou a viagem.");
-        diario2.registrar("Sinal estranho detectado no radar.");
+        central1.consumirEnergia("Motor principal", 20);
+        central2.consumirEnergia("Radar", 15);
 
-        if (diario1 == diario2) {
-            System.out.println("Os dois diários são o mesmo objeto.");
+        central1.mostrarEnergia();
+
+        central2.recarregarEnergia(10);
+
+        central1.mostrarEnergia();
+
+        if (central1 == central2) {
+            System.out.println("As duas variáveis usam a mesma central de energia.");
         }
     }
 }
@@ -121,13 +111,37 @@ public class MainSingleton {
 
 ---
 
+## Como funciona o Singleton com enum?
+
+Neste exemplo, o Singleton foi feito usando `enum`.
+
+A linha abaixo representa a única instância da central de energia:
+
+```java
+INSTANCIA;
+```
+
+Sempre que o sistema usa:
+
+```java
+CentralEnergia.INSTANCIA
+```
+
+ele está acessando o mesmo objeto.
+
+Por isso, quando `central1` consome energia e `central2` recarrega energia, as duas estão alterando a mesma central.
+
+---
+
 ## Saída esperada
 
 ```text
-Diário de bordo criado.
-Registro no diário: A nave iniciou a viagem.
-Registro no diário: Sinal estranho detectado no radar.
-Os dois diários são o mesmo objeto.
+Motor principal consumiu 20% de energia.
+Radar consumiu 15% de energia.
+Energia atual da nave: 65%
+Energia recarregada em 10%.
+Energia atual da nave: 75%
+As duas variáveis usam a mesma central de energia.
 ```
 
 ---
@@ -136,7 +150,7 @@ Os dois diários são o mesmo objeto.
 
 ## O que é Adapter?
 
-O padrão Adapter é usado quando um sistema precisa utilizar uma classe, biblioteca ou código que possui uma forma diferente de funcionamento.
+O padrão Adapter é usado quando um sistema precisa utilizar uma classe, biblioteca ou recurso que possui uma forma diferente de funcionamento.
 
 Ele funciona como uma ponte entre dois formatos incompatíveis.
 
@@ -146,19 +160,19 @@ Ele funciona como uma ponte entre dois formatos incompatíveis.
 
 Neste projeto, o Adapter foi aplicado em um sistema de registro de eventos de uma nave.
 
-O sistema precisa registrar eventos usando um método simples:
+A nave registra eventos usando um formato simples:
 
 ```java
 registrar(String setor, String mensagem, int gravidade);
 ```
 
-Porém, para melhorar o sistema, foi usada a biblioteca padrão do Java:
+Porém, o Java possui uma biblioteca própria para registro de logs:
 
 ```java
 java.util.logging.Logger
 ```
 
-Como o `Logger` trabalha com outro formato, foi criado um Adapter para fazer essa adaptação.
+Como o `Logger` trabalha de uma forma diferente, foi criado um Adapter para adaptar o sistema ao formato da biblioteca.
 
 ---
 
@@ -173,7 +187,7 @@ Main.java
 
 ---
 
-## Interface Registro
+## Interface `Registro.java`
 
 ```java
 public interface Registro {
@@ -186,7 +200,7 @@ Essa interface define o formato que a classe `Nave` espera usar para registrar e
 
 ---
 
-## Classe LoggerAdapter
+## Classe `LoggerAdapter.java`
 
 ```java
 import java.util.logging.Level;
@@ -219,7 +233,7 @@ public class LoggerAdapter implements Registro {
 
 ---
 
-## Classe Nave
+## Classe `Nave.java`
 
 ```java
 public class Nave {
@@ -240,7 +254,7 @@ public class Nave {
 
 ---
 
-## Classe Main
+## Classe `Main.java`
 
 ```java
 public class Main {
@@ -262,26 +276,34 @@ public class Main {
 
 A classe `Nave` usa apenas a interface `Registro`.
 
-Ela não sabe que por trás está sendo usada a biblioteca `Logger`.
+Ela não sabe que por trás está sendo usado o `Logger` do Java.
 
-A chamada simples:
+A nave chama este método:
 
 ```java
 registro.registrar("Radar", "Objeto desconhecido detectado", 2);
 ```
 
-É adaptada para:
+O `LoggerAdapter` recebe essa chamada e transforma a gravidade numérica em um nível do `Logger`.
 
-```java
-logger.log(Level.WARNING, "[Radar] Objeto desconhecido detectado");
-```
-
-Ou seja, o `LoggerAdapter` transforma a gravidade numérica do sistema em níveis do Logger:
+A conversão funciona assim:
 
 ```text
 1 → INFO
 2 → WARNING
 3 → SEVERE
+```
+
+Então esta chamada:
+
+```java
+registro.registrar("Radar", "Objeto desconhecido detectado", 2);
+```
+
+é adaptada para algo equivalente a:
+
+```java
+logger.log(Level.WARNING, "[Radar] Objeto desconhecido detectado");
 ```
 
 ---
@@ -296,7 +318,7 @@ WARNING: [Radar] Objeto desconhecido detectado
 SEVERE: [Oxigênio] Nível crítico de oxigênio
 ```
 
-Dependendo da versão do Java, o Logger também pode exibir data, horário e nome da classe.
+Dependendo da versão do Java, o `Logger` também pode exibir data, horário e nome da classe.
 
 ---
 
@@ -313,26 +335,25 @@ Dependendo da versão do Java, o Logger também pode exibir data, horário e nom
 
 ## Singleton
 
-No exemplo do Singleton, a classe `DiarioDeBordo` só pode ter um objeto criado.
+No exemplo do Singleton, a `CentralEnergia` representa a central principal de energia da nave.
 
-Mesmo usando:
+Como foi usado `enum`, existe apenas uma instância:
 
 ```java
-DiarioDeBordo diario1 = DiarioDeBordo.getInstancia();
-DiarioDeBordo diario2 = DiarioDeBordo.getInstancia();
+CentralEnergia.INSTANCIA
 ```
 
-As duas variáveis apontam para o mesmo objeto.
+Assim, qualquer parte do sistema que acessar essa central estará usando o mesmo objeto.
 
 ---
 
 ## Adapter
 
-No exemplo do Adapter, a classe `Nave` usa uma interface simples chamada `Registro`.
+No exemplo do Adapter, a classe `Nave` registra eventos usando a interface `Registro`.
 
-Porém, quem registra as mensagens de verdade é o `Logger` do Java.
+Porém, quem registra os eventos de verdade é o `Logger` do Java.
 
-A classe `LoggerAdapter` faz a ponte entre o formato simples do sistema e o formato da biblioteca `Logger`.
+A classe `LoggerAdapter` faz a ponte entre o formato simples do sistema e o formato usado pela biblioteca `Logger`.
 
 ---
 
@@ -362,8 +383,8 @@ java Main
 
 Este projeto demonstra dois padrões de projeto importantes em Java.
 
-O Singleton foi usado para garantir que exista apenas um Diário de Bordo no sistema.
+O Singleton foi usado para garantir que exista apenas uma Central de Energia no sistema da nave.
 
-O Adapter foi usado para permitir que a classe `Nave` use um sistema simples de registro, enquanto internamente os eventos são registrados com a biblioteca `Logger` do Java.
+O Adapter foi usado para permitir que a classe `Nave` continue usando um método simples de registro, enquanto internamente os eventos são registrados com a biblioteca `Logger` do Java.
 
-Assim, o projeto mostra como aplicar padrões de projeto para organizar melhor o código e facilitar futuras alterações.
+Assim, o projeto mostra como padrões de projeto ajudam a organizar o código e facilitar futuras mudanças.
